@@ -5,7 +5,7 @@ ARG CI_VERSION=
 RUN sbt assembly
 RUN cp target/scala-*/cadvisor-limiter*.sh.bat cadvisor-limiter.sh.bat
 
-FROM google/cadvisor
+FROM gcr.io/cadvisor/cadvisor
 
 RUN apk --no-cache add openjdk11 --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
 COPY --from=builder /root/cadvisor-limiter.sh.bat /.
