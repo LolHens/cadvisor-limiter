@@ -2,12 +2,13 @@ FROM lolhens/sbt-graal:graal-20.3.0-java11 as builder
 
 COPY . .
 ARG CI_VERSION=
-RUN sbt graalvm-native-image:packageBin
-RUN cp target/graalvm-native-image/cadvisor-limiter* cadvisor-limiter
+RUN sbt assembly
+RUN cp target/scala-*/cadvisor-limiter*.sh.bat cadvisor-limiter.sh.bat
 
 FROM google/cadvisor
 
-COPY --from=builder /root/cadvisor-limiter /.
+RUN apk --no-cache add openjdk11 --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
+COPY --from=builder /root/cadvisor-limiter.sh.bat /.
 
 COPY ["entrypoint.sh", "/entrypoint.sh"]
 ENTRYPOINT ["/entrypoint.sh"]

@@ -1,5 +1,5 @@
 #!/bin/sh
 
-/cadvisor-limiter
+/cadvisor-limiter.sh.bat
 
 exec /usr/bin/cadvisor -logtostderr -port 8081 "$@"
