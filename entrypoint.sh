@@ -2,4 +2,4 @@
 
 /cadvisor-limiter
 
-exec /usr/bin/cadvisor -logtostderr "$@"
+exec /usr/bin/cadvisor -logtostderr -port 8081 "$@"

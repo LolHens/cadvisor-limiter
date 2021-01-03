@@ -9,4 +9,4 @@ FROM google/cadvisor
 
 COPY --from=builder /root/cadvisor-limiter /.
 
-ENTRYPOINT ["/entrypoint"]
+ENTRYPOINT ["/entrypoint.sh"]
