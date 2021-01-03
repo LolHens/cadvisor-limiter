@@ -10,11 +10,14 @@ import org.http4s.client.jdkhttpclient.JdkHttpClient
 import org.http4s.dsl.task._
 import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
+import org.slf4j.LoggerFactory
 
 import java.net.http.HttpClient
 import scala.concurrent.duration._
 
 object Server extends TaskApp {
+  private val logger = LoggerFactory.getLogger(getClass)
+
   private val connectTimeout: FiniteDuration = 5.minutes
 
   private val targetUri = Uri.unsafeFromString("http://localhost:8081")
@@ -48,6 +51,7 @@ object Server extends TaskApp {
         activeRequest <- activeRequestVar
         response <- activeRequest.tryTake.bracket[Response[Task]] {
           case Some(_) =>
+            val time = System.currentTimeMillis()
             for {
               response <- clientResource.flatMap(_.run(Request[Task](Method.GET, targetUri.withPath(request.uri.path))))
                 .use(response =>
@@ -57,10 +61,12 @@ object Server extends TaskApp {
                     response.withBodyStream(Stream.chunk(chunk))
                 )
               _ <- activeRequest.tryPut(Some(response))
+              _ = logger.info(s"Request took ${System.currentTimeMillis() - time}ms")
             } yield
               response
 
           case None =>
+            logger.info("Waiting for active request")
             for {
               responseOption <- activeRequest.read
               response <- responseOption.map(Task.now).getOrElse(InternalServerError())
