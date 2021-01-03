@@ -18,7 +18,7 @@ import scala.concurrent.duration._
 object Server extends TaskApp {
   private val logger = LoggerFactory.getLogger(getClass)
 
-  private val connectTimeout: FiniteDuration = 5.minutes
+  private val timeout: FiniteDuration = 5.minutes
 
   private val targetUri = Uri.unsafeFromString("http://localhost:8081")
 
@@ -39,7 +39,7 @@ object Server extends TaskApp {
           params.setProtocols(Array("TLSv1.2"))
           params
         }
-        .connectTimeout(java.time.Duration.ofMillis(connectTimeout.toMillis))
+        .connectTimeout(java.time.Duration.ofMillis(timeout.toMillis))
         .build()
     )).memoizeOnSuccess)
 
@@ -52,6 +52,7 @@ object Server extends TaskApp {
         response <- activeRequest.tryTake.bracket[Response[Task]] {
           case Some(_) =>
             val time = System.currentTimeMillis()
+            logger.info("Requesting")
             for {
               response <- clientResource.flatMap(_.run(Request[Task](Method.GET, targetUri.withPath(request.uri.path))))
                 .use(response =>
@@ -69,6 +70,7 @@ object Server extends TaskApp {
             logger.info("Waiting for active request")
             for {
               responseOption <- activeRequest.read
+              _ = if (responseOption.isEmpty) logger.error("Got error from active request!")
               response <- responseOption.map(Task.now).getOrElse(InternalServerError())
             } yield
               response
